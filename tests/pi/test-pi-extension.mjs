@@ -62,7 +62,7 @@ test('extension leaves package skill discovery to Pi and registers lifecycle hoo
   const { handlers } = await loadExtension();
 
   assert.equal((handlers.get('resources_discover') ?? []).length, 0, 'extension must not bypass package skill filters');
-  for (const event of ['session_start', 'session_compact', 'context']) {
+  for (const event of ['session_start', 'session_compact', 'context', 'tool_call']) {
     assert.equal((handlers.get(event) ?? []).length, 1, `missing ${event} handler`);
   }
   assert.equal((handlers.get('session_before_compact') ?? []).length, 0);
@@ -144,6 +144,73 @@ test('session_compact injects bootstrap after compaction summaries, not before c
   assert.equal(result.messages[1].role, 'user');
   assert.match(textOf(result.messages[1]), /You have superpowers/);
   assert.equal(result.messages[2], user);
+});
+
+test('tool_call blocks the first implementation seat until planner runs', async () => {
+  const { handlers } = await loadExtension();
+  const toolCall = firstHandler(handlers, 'tool_call');
+  const call = (tasks, ctx = {}) =>
+    toolCall({ type: 'tool_call', toolName: 'task', input: { context: '', tasks } }, ctx);
+
+  const implementer = { agent: 'sdd-implementer', task: 'do it', solutionSpace: 'fixed' };
+  const planner = { agent: 'planner', task: 'check the design', solutionSpace: 'fixed' };
+
+  const blocked = await call([implementer]);
+  assert.equal(blocked?.block, true);
+  assert.match(blocked.reason, /planner/);
+
+  const plannerCall = await call([planner]);
+  assert.notEqual(plannerCall?.block, true);
+
+  const allowed = await call([implementer]);
+  assert.notEqual(allowed?.block, true);
+});
+
+test('tool_call does not let a planner and implementer in one batch satisfy the gate', async () => {
+  const { handlers } = await loadExtension();
+  const toolCall = firstHandler(handlers, 'tool_call');
+  const call = (tasks) => toolCall({ type: 'tool_call', toolName: 'task', input: { tasks } }, {});
+
+  const implementer = { agent: 'sdd-implementer', task: 'do it', solutionSpace: 'fixed' };
+  const planner = { agent: 'planner', task: 'check the design', solutionSpace: 'fixed' };
+
+  const both = await call([planner, implementer]);
+  assert.equal(both?.block, true);
+  assert.equal((await call([implementer]))?.block, true);
+
+  assert.notEqual((await call([planner]))?.block, true);
+  assert.notEqual((await call([implementer]))?.block, true);
+});
+
+test('tool_call gate skips subagents, reviews, and other agents', async () => {
+  const { handlers } = await loadExtension();
+  const toolCall = firstHandler(handlers, 'tool_call');
+  const call = (tasks, ctx = {}) => toolCall({ type: 'tool_call', toolName: 'task', input: { tasks } }, ctx);
+
+  const implementer = { agent: 'sdd-implementer', task: 'do it', solutionSpace: 'fixed' };
+  assert.notEqual((await call([implementer], { agent: { kind: 'sub' } }))?.block, true);
+
+  const reviewer = { agent: 'sdd-reviewer', task: 'review it', solutionSpace: 'fixed' };
+  assert.notEqual((await call([reviewer]))?.block, true);
+  assert.notEqual((await call([{ agent: 'scout', task: 'look', solutionSpace: 'fixed' }]))?.block, true);
+
+  // The blocked call above did not satisfy the gate.
+  assert.equal((await call([implementer]))?.block, true);
+});
+
+test('session_start resets the planner gate', async () => {
+  const { handlers } = await loadExtension();
+  const toolCall = firstHandler(handlers, 'tool_call');
+  const sessionStart = firstHandler(handlers, 'session_start');
+  const call = (tasks) => toolCall({ type: 'tool_call', toolName: 'task', input: { tasks } }, {});
+
+  const implementer = { agent: 'sdd-implementer', task: 'do it', solutionSpace: 'fixed' };
+  assert.equal((await call([implementer]))?.block, true);
+  assert.notEqual((await call([{ agent: 'planner', task: 'check', solutionSpace: 'fixed' }]))?.block, true);
+  assert.notEqual((await call([implementer]))?.block, true);
+
+  await sessionStart({ type: 'session_start', reason: 'startup' }, {});
+  assert.equal((await call([implementer]))?.block, true);
 });
 
 test('pi tools reference documents pi-specific mappings', async () => {

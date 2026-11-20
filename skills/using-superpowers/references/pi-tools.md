@@ -39,6 +39,8 @@ The SDD seats ship role aliases, not model ids: `@task` for per-task seats and `
 
 The `planner` seat is outside the SDD ladder: brainstorming dispatches it for the builder check, so it runs on `modelRoles.plan` by default. `task.agentModelOverrides.planner` remaps it (for example to `@slow`) without editing the agent file.
 
+The extension gates the first implementation dispatch: `sdd-implementer` and `sdd-escalation-implementer` are blocked until `planner` has been dispatched in the main session. Review seats are not gated, so an existing branch can still be reviewed.
+
 Never use the bundled `task` agent for an SDD seat: it lacks the seat's tools, output contract and no-subagent rule, and runs whatever `modelRoles.task` names (else the session model). If `task.enableEffort` is on, `effort: "hi"` on a dispatch raises that one subagent's thinking without changing its model — the only accepted values are `"lo"`, `"med"`, `"hi"`. `"hi"` maps to the model's top supported level, capped by `task.maxEffort`.
 
 ### Tool boundary

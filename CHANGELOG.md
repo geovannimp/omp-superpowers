@@ -12,6 +12,8 @@ A version is `<upstream version>-omp.<n>`: the upstream release this fork is syn
 
 - **Agents use role aliases only, with no hardcoded model ids.** `sdd-implementer`, `sdd-reviewer`, and `sdd-rereviewer` ask for `@task`; `sdd-escalation-implementer` and `sdd-final-reviewer` ask for `@slow`; `planner` asks for `@plan`, then `@task`. `thinkingLevel` still carries the seat ladder (medium / high / low / max). Re-point a role once in `modelRoles`, or one seat with `task.agentModelOverrides`, without editing the agent files.
 
+- **The first implementation dispatch is gated on the planner check.** The extension's `tool_call` hook blocks `sdd-implementer` and `sdd-escalation-implementer` until `planner` has been dispatched in the main session. Review seats stay ungated so an existing branch can still be reviewed, and a batch containing both `planner` and an implementation seat does not satisfy the gate.
+
 ## [7.0.2-omp.3] - 2026-11-09
 
 ### Fixed

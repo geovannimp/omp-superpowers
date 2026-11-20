@@ -282,7 +282,8 @@ preferences override both.
 **Builder check:** dispatch the `planner` agent with
 `builder-check-prompt.md` in this directory — in OMP it runs on the plan
 model role by default (`modelRoles.plan`; override it with
-`task.agentModelOverrides.planner`). When you tell your human
+`task.agentModelOverrides.planner`). The extension blocks the first
+implementation dispatch until this check has run. When you tell your human
 partner you're writing it up, say a reviewer will read it first, that you
 may come back once with a few questions, and, for software, that the
 plan comes with it. Don't hand over the document until the check is

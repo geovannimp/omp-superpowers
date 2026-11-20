@@ -5,6 +5,11 @@ import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 
 const EXTREMELY_IMPORTANT_MARKER = "<EXTREMELY_IMPORTANT>";
 const BOOTSTRAP_MARKER = "superpowers:using-superpowers bootstrap for pi";
+const BUILDER_CHECK_AGENT = "planner";
+const IMPLEMENTATION_AGENTS: Record<string, true> = {
+	"sdd-implementer": true,
+	"sdd-escalation-implementer": true,
+};
 
 const extensionDir = dirname(fileURLToPath(import.meta.url));
 const packageRoot = resolve(extensionDir, "../..");
@@ -15,13 +20,38 @@ let cachedBootstrap: string | null | undefined;
 
 export default function superpowersPiExtension(pi: ExtensionAPI) {
 	let injectBootstrap = true;
+	let builderCheckDispatched = false;
 
 	pi.on("session_start", async () => {
 		injectBootstrap = true;
+		builderCheckDispatched = false;
 	});
 
 	pi.on("session_compact", async () => {
 		injectBootstrap = true;
+	});
+
+	// The brainstorming builder check is a subagent dispatch, so prose alone
+	// cannot guarantee it happened. Gate the first implementation seat on a
+	// planner dispatch in this main session; reviews stay ungated so an
+	// existing branch can still be reviewed.
+	pi.on("tool_call", async (event, ctx) => {
+		if (ctx?.agent?.kind === "sub") return;
+		if (event.toolName !== "task") return;
+
+		const agents = taskAgentNames(event.input);
+		const needsBuilderCheck = agents.some((agent) => IMPLEMENTATION_AGENTS[agent]);
+		if (needsBuilderCheck && !builderCheckDispatched) {
+			return {
+				block: true,
+				reason:
+					'Superpowers: dispatch the planner builder check before the first implementation subagent. Read skill://brainstorming\'s Builder check, write the design, then call task with agent "planner" and builder-check-prompt.md. Reviews and final review are not gated.',
+			};
+		}
+
+		if (agents.includes(BUILDER_CHECK_AGENT)) {
+			builderCheckDispatched = true;
+		}
 	});
 
 	// Messages returned from a context handler are sent to the provider but never
@@ -50,6 +80,18 @@ export default function superpowersPiExtension(pi: ExtensionAPI) {
 			],
 		};
 	});
+}
+
+function taskAgentNames(input: unknown): string[] {
+	if (!input || typeof input !== "object") return [];
+	const tasks = "tasks" in input ? input.tasks : undefined;
+	const items = Array.isArray(tasks) ? tasks : [input];
+	const agents: string[] = [];
+	for (const item of items) {
+		if (!item || typeof item !== "object") continue;
+		if ("agent" in item && typeof item.agent === "string") agents.push(item.agent);
+	}
+	return agents;
 }
 
 function getBootstrapContent(): string | null {

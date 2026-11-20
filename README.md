@@ -160,6 +160,12 @@ Its defaults are `model: ["@plan", "@task"]` at `thinkingLevel: high`, so
 the plan role wins when it is configured, `@task` catches a missing plan
 pin, and a `task.agentModelOverrides.planner` entry wins over both.
 
+The extension enforces the gate: in a main session it blocks a `task`
+dispatch of `sdd-implementer` or `sdd-escalation-implementer` until
+`planner` has been dispatched. Reviews and the final review are not gated,
+so an existing branch can still be reviewed. A batch that contains both
+`planner` and an implementation seat does not satisfy the gate.
+
 <details>
 <summary><b>Which model a seat actually runs on</b></summary>
 
