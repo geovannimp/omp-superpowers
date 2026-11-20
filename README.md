@@ -14,17 +14,18 @@ Upstream ships a Pi/omp compatibility layer, and on omp it is wrong:
 This fork keeps the skills and fixes the omp side:
 
 - **The tool mapping tells the truth** about `task`, `todo` and `read`/`grep`/`glob`, and reaches every prompt of a session.
-- **Five omp agents** (`agents/sdd-*.md`) give every subagent-driven-development seat its own model, thinking level and tool set.
+- **Five SDD agents and a planner seat** (`agents/*.md`) give every subagent-driven-development seat and the brainstorming builder check its own role alias, thinking level and tool set.
+- **The planner check is enforced.** The extension blocks the first `sdd-implementer` / `sdd-escalation-implementer` dispatch until `planner` has run, so brainstorming's builder check cannot be skipped silently.
 - **subagent-driven-development is rewritten around them:** a three-round fix loop, structured reviewer output, independent tasks in parallel worktrees, and a task review only where a task's risk earns it.
 - **Fewer stops for approval.** A small change skips the design document, plan and subagents, and a project asks for one approval of design, plan and execution method together.
 - **Work done in an ovnfs checkout reaches your repository.** When [ovnfs](https://github.com/stencil-hq/ovnfs) is installed, omp tells agents to use its checkouts for separate copies. Finishing a branch inside one now applies it to your folder and merges it there, and parallel tasks keep worktrees the plan can merge (see [Separate copies: worktrees and ovnfs](#separate-copies-worktrees-and-ovnfs)).
 
 ## Get started
 
-Install it:
+Install this fork:
 
 ```bash
-omp plugin install npm:@loneexile/omp-superpowers
+omp plugin install git:github.com/geovannimp/omp-superpowers@main
 ```
 
 Check that it loaded. Your `task` tool's roster should now include the five `sdd-*` agents and the `planner` agent beside omp's own:
@@ -37,25 +38,31 @@ omp -p --no-session --no-skills --model @smol \
 
 That's all. The skills drive themselves once loaded: start a new omp session and ask for what you want to build.
 
-To move to the newest release later, run `omp plugin upgrade @loneexile/omp-superpowers` and restart omp.
+To update later, reinstall the fork and restart omp:
+
+```bash
+omp plugin install --force git:github.com/geovannimp/omp-superpowers@main
+```
+
+The published `npm:@loneexile/omp-superpowers` package is LoneExile's release and does not carry this fork's planner seat or gate.
 
 <details>
 <summary><b>Versions, upgrading and other ways to install</b></summary>
 
-Releases are versioned `<upstream version>-omp.<n>`: `7.0.2-omp.1` is upstream v7.0.2 plus this fork's first iteration on it. [CHANGELOG.md](CHANGELOG.md) lists each release. To pin another one, uninstall and install it by version:
+Releases are versioned `<upstream version>-omp.<n>`: `7.0.2-omp.1` is upstream v7.0.2 plus LoneExile's first omp iteration on it. [CHANGELOG.md](CHANGELOG.md) lists each release. This fork is synced to obra/superpowers v7.0.2 (`obra/main`) and LoneExile's `7.0.2-omp.3`; the planner seat, alias-only models and the extension gate are fork-only changes on top of that. To pin a branch or commit, uninstall and install from the fork:
 
 ```bash
 omp plugin uninstall @loneexile/omp-superpowers
-omp plugin install npm:@loneexile/omp-superpowers@<version>
+omp plugin install git:github.com/geovannimp/omp-superpowers@<branch-or-sha>
 ```
 
 **After an upgrade, restart omp.** Agent definitions are read **per dispatch**, so a new version takes effect on the next `task` call in a running session. The extension, the injected tool mapping and the skill catalog are read at process start, so they need the restart. The extension injects the using-superpowers bootstrap, with the omp tool mapping, into every model request of the main session, after a compaction summary when there is one. Subagents never get it.
 
-**Unreleased `main`** installs from GitHub under the same plugin name, pinned to a commit: `omp plugin install github:LoneExile/omp-superpowers#<sha>`.
+**Unreleased `main`** installs from GitHub under the same plugin name, pinned to a commit: `omp plugin install git:github.com/geovannimp/omp-superpowers@<sha>`.
 
 **Coming from before 6.4.2-omp.1?** Those installs used the plugin name `superpowers`; run `omp plugin uninstall superpowers` before installing this package.
 
-**Marketplace or `--plugin-dir` installs.** npm and `github:` installs keep each seat's model. For a marketplace or `--plugin-dir` install of the repo root, the repo carries `.omp-plugin/plugin.json`: omp 18.4.10's agent discovery treats a root that has `.claude-plugin/plugin.json` as Claude dialect, and drops every agent's `model:` line, unless that file is present. This was read from omp's source; a marketplace install has not been exercised. On omp 18.18.1, `--plugin-dir` loads the skills but not the extension.
+**Marketplace or `--plugin-dir` installs.** git and npm installs keep each seat's model alias. For a marketplace or `--plugin-dir` install of the repo root, the repo carries `.omp-plugin/plugin.json`: omp 18.4.10's agent discovery treats a root that has `.claude-plugin/plugin.json` as Claude dialect, and drops every agent's `model:` line, unless that file is present. This was read from omp's source; a marketplace install has not been exercised. On omp 18.18.1, `--plugin-dir` loads the skills but not the extension.
 
 </details>
 
@@ -69,7 +76,8 @@ flowchart TD
     B -->|"a quick, clear task"| Q["done right away"]
     B -->|"a small change"| S["you approve it in chat; the session builds it on a branch, test first, one commit"]
     B -->|"a project"| D["a written design"]
-    D --> P["writing-plans: the plan, then one approval of design, plan and method"]
+    D --> BC["planner: builder check on the plan model"]
+    BC --> P["writing-plans: the plan, then one approval of design, plan and method"]
     P -->|"subagents"| SDD["subagent-driven-development"]
     P -->|"Native"| EP["executing-plans: the session does every task itself"]
     SDD --> F["finishing-a-development-branch: merge, PR or keep"]
@@ -78,7 +86,7 @@ flowchart TD
 
 The usual path, skill by skill:
 
-1. `read skill://brainstorming` — turn an idea into a design. It reads the project first, asks what you want something for when you haven't said, asks only questions whose answers change what gets built, and lays out nameable choices with a recommendation. When nothing is open, its first message is a short design for you to approve. A small change stops here: after you approve it in chat, the session builds it itself, test first, and commits once. A change to existing behavior (an exit code, error handling, a default) or anything else on its never-small list waits for your approval however completely you specified it; the extension tells the agent that omp's act-without-asking rules don't override that, which omp 18.18.3 otherwise does
+1. `read skill://brainstorming` — turn an idea into a design. It reads the project first, asks what you want something for when you haven't said, asks only questions whose answers change what gets built, and lays out nameable choices with a recommendation. When nothing is open, its first message is a short design for you to approve. A small change stops here: after you approve it in chat, the session builds it itself, test first, and commits once. For a project, after the design is written, brainstorming dispatches `planner` for the builder check; the extension blocks the first implementation dispatch until that has happened. A change to existing behavior (an exit code, error handling, a default) or anything else on its never-small list waits for your approval however completely you specified it; the extension tells the agent that omp's act-without-asking rules don't override that, which omp 18.18.3 otherwise does
 2. `read skill://writing-plans` — produce `docs/plans/<date>-<name>.md`, pick the execution method, and ask once for approval of the design, the plan and the method together
 3. `read skill://subagent-driven-development` — execute the plan via subagents, independent tasks in parallel. If you swap to Native in that approval, `executing-plans` runs instead: the session does every task itself, and only the final review is a subagent (`sdd-final-reviewer`)
 4. `read skill://finishing-a-development-branch` — merge, open a PR, or keep the branch
@@ -94,7 +102,7 @@ After `/vibe` the session is a director of `fast`/`good` workers and has no `tas
 
 ## Running a plan with subagents
 
-subagent-driven-development hands each task to a fresh implementer, reviews it where its risk calls for that, and records every step in a ledger, so a long run can pick up where it stopped. Per task:
+subagent-driven-development hands each task to a fresh implementer, reviews it where its risk calls for that, and records every step in a ledger, so a long run can pick up where it stopped. Before the first task, the extension requires a `planner` dispatch in the session; brainstorming's builder check normally provides it. Per task:
 
 ```mermaid
 flowchart TD
@@ -157,8 +165,9 @@ task:
 ```
 
 Its defaults are `model: ["@plan", "@task"]` at `thinkingLevel: high`, so
-the plan role wins when it is configured, `@task` catches a missing plan
-pin, and a `task.agentModelOverrides.planner` entry wins over both.
+the plan role wins when it is configured, `@task` catches a missing
+plan-role assignment, and a `task.agentModelOverrides.planner` entry wins
+over both.
 
 The extension enforces the gate: in a main session it blocks a `task`
 dispatch of `sdd-implementer` or `sdd-escalation-implementer` until
@@ -232,7 +241,7 @@ omp resolves each seat's model and thinking level in a fixed order. The override
 ```mermaid
 flowchart LR
     subgraph model["model"]
-        M1["task.agentModelOverrides"] -->|"unset"| M2["agent file model list: pin, then @task or @slow"]
+        M1["task.agentModelOverrides"] -->|"unset"| M2["agent file model list: role aliases (@task, @slow, @plan)"]
     end
     subgraph level["thinking level"]
         L1["explicit :level on the winning model string"] -->|"none"| L2["agent file thinkingLevel:"]
@@ -267,22 +276,22 @@ Measured on a real fix-round re-review with identical inputs: a grok-4.6 seat to
 | `task.isolation.enabled` (+ `isolation.backend`, default `auto`) | off by default, and SDD does not use it. Under the default `merge: patch` isolated work returns as an uncommitted patch; `merge: branch` keeps commits but applies them as each task ends, before review. Either way, an isolated subagent cannot take a fix round: a message to one is delivered, but its fix never reaches your branch while the session runs, and after the session it sits on a leftover `omp/task/<id>` branch (measured on omp 18.11.0, and on 18.18.3 with ovnfs in both merge modes). With `auto` and ovnfs on `PATH`, isolated subagents run in ovnfs checkouts. Parallel tasks get their own `omp worktree add` worktrees instead |
 | `ovnfs.path` | where omp finds the ovnfs binary (default: `ovnfs` on `PATH`). Found means the *Separate checkouts* section is in every system prompt; see [Separate copies](#separate-copies-worktrees-and-ovnfs) |
 | `task.enableEffort` | exposes per-dispatch `effort` (`"lo"`, `"med"`, `"hi"`); `"hi"` maps to the model's top supported level, capped by `task.maxEffort`. SDD uses `effort: "hi"` for high-risk task reviews, and for escalation only when a host override lowers that seat |
-| `task.showResolvedModelBadge` (default off) | shows the model each subagent actually ran. A seat whose pinned provider has no credentials silently runs on another model |
+| `task.showResolvedModelBadge` (default off) | shows the model each subagent actually ran. A seat whose role resolves to a provider without credentials silently runs on another model |
 | `task.enableLsp`, `astGrep.enabled` (both default off) | omp only activates `lsp` and `ast_grep` in subagents when these are on |
 | `autolearn.autoContinue` | omp's auto-learn mints managed skills every session; the whole catalog is injected into every subagent's prompt. Keep it pruned or off — a 2,500-skill catalog was ~220k tokens per subagent turn |
 
 ## What changed from upstream
 
-In short: the omp extension and `pi-tools.md` describe omp's real tools; five `sdd-*` agents are new; subagent-driven-development, executing-plans, writing-plans and brainstorming are reworked as described above; requesting-code-review gets a small edit; using-git-worktrees gets omp sections and finishing-a-development-branch an ovnfs one; and specs and plans live in `docs/specs/` and `docs/plans/`.
+In short: the omp extension and `pi-tools.md` describe omp's real tools; five SDD agents and a planner seat are new; every seat uses a role alias instead of a pinned model; the extension gates the first implementation dispatch on the planner check; subagent-driven-development, executing-plans, writing-plans and brainstorming are reworked as described above; requesting-code-review gets a small edit; using-git-worktrees gets omp sections and finishing-a-development-branch an ovnfs one; and specs and plans live in `docs/specs/` and `docs/plans/`.
 
 <details>
 <summary><b>File by file</b></summary>
 
-- `.pi/extensions/superpowers.ts` — the injected mapping names `task`, `todo`, the `sdd-*` roster, and the no-`model:`-field rule; it says omp's act-without-asking and short-turn rules don't cover a Superpowers approval step, so a never-small request goes through brainstorming however completely it is specified; it also skips subagent sessions; it tells a dispatching session to name the checks each subagent must run, since omp 18.4.12 tells subagents to leave builds, tests and smoke runs to the main agent unless their assignment explicitly instructs them; its last paragraph points a vibe-mode director (tools include `vibe_spawn` but not `task`) at the *Vibe mode* section of `pi-tools.md`
+- `.pi/extensions/superpowers.ts` — the injected mapping names `task`, `todo`, the `sdd-*` and `planner` roster, and the no-`model:`-field rule; it gates the first `sdd-implementer` / `sdd-escalation-implementer` dispatch on a `planner` dispatch; it says omp's act-without-asking and short-turn rules don't cover a Superpowers approval step, so a never-small request goes through brainstorming however completely it is specified; it also skips subagent sessions; it tells a dispatching session to name the checks each subagent must run, since omp 18.4.12 tells subagents to leave builds, tests and smoke runs to the main agent unless their assignment explicitly instructs them; its last paragraph points a vibe-mode director (tools include `vibe_spawn` but not `task`) at the *Vibe mode* section of `pi-tools.md`
 - `.omp-plugin/plugin.json` — new. Marks the repo root as an omp-native plugin so a marketplace or `--plugin-dir` install keeps each agent's `model:` line
 - `skills/using-superpowers/references/pi-tools.md` — same, as the reference doc; it also gains a *Checks* subsection (the 18.4.12 subagent hand-off rule, and why every dispatch names its checks) and a *Vibe mode* section: what a director keeps and lacks, how skill actions map onto `vibe_*` and workers, and the worktree and request-budget limits
 - `skills/brainstorming/` — upstream v7.0.2's questions (ask why first; ask only when the answer changes what gets built, otherwise state the call as a proposal; process steps are the agent's calls; nameable choices sketched with a pick; technical appetite read from how they talk; recon done, not offered; text sketches, the visual companion only when the look is theirs to decide), on top of the fork's own flow: a defined small-change path (after the in-chat approval the session builds it itself on a branch: the full suite before changing anything, test first, the covering tests and the suite again, then one commit of only its own files and hunks, with no design document, plan or subagents; security, auth, concurrency, money, migrations, changes one revert cannot undo, new config files or stored formats, changes to existing behavior, new interfaces other code builds on and new dependencies are never small, and none of them takes the quick-task route however complete the request); a request is a quick task only if doing it leaves no choice the person would see; each question asks one thing, with any reason before it; a playback rides along with the next question; the approaches ride with the last playback chunk instead of a message of their own; when nothing is open, the first message's short design asks whether to go ahead, and for a project that means writing it up with its plan; for software, the plan is written right after the builder check so the design and the plan get one approval. Upstream's short design doc and plan for every small change are not taken
-- `agents/sdd-*.md` — new. Each seat's `model:` is a pin plus a role fallback (`@task` or `@slow`), and all set `readSummarize: false`. `sdd-final-reviewer` reviews the whole branch for both ways of running a plan; after subagent-driven-development it does the task review's work on every task left to it (`review at final`) before the seams. It reads `requesting-code-review/code-reviewer.md` at run time and applies its What to Check, Calibration, severity definitions and Critical Rules, while carrying upstream's vision-document and Declined-to-judge rules in its own body; a crash or lost data on user input is always a finding, never a Declined-to-judge line. Descriptions name roles, never models
+- `agents/sdd-*.md` and `agents/planner.md` — new. Each seat's `model:` uses role aliases only (`@task`, `@slow`, or `@plan` then `@task`), and all set `readSummarize: false`. `sdd-final-reviewer` reviews the whole branch for both ways of running a plan; after subagent-driven-development it does the task review's work on every task left to it (`review at final`) before the seams. It reads `requesting-code-review/code-reviewer.md` at run time and applies its What to Check, Calibration, severity definitions and Critical Rules, while carrying upstream's vision-document and Declined-to-judge rules in its own body; a crash or lost data on user input is always a finding, never a Declined-to-judge line. Descriptions name roles, never models
 - `skills/subagent-driven-development/` — *Model Selection* → *Agent Selection*; fix-loop cap 5 → 3 with a round-3 escalation seat; a proven-trivial-fix route that replaces a re-review with a one-command proof; the pre-flight scan builds a review list (plan-marked or ruled high-risk tasks get a task review, the rest get the controller's own covering-test run and the final review) and waves (tasks with no shared file or interface run in parallel, up to three, each in its own `omp worktree add` worktree with the project's install step re-run there, merged back with `--no-ff` after their covering tests pass on the merged tree; a task that still will not merge after round 3 stops the run; waves keep `omp worktree add` when ovnfs is installed, and an ovnfs copy's branch comes back with `git fetch`); Setup creates the approved branch in this checkout instead of a worktree; resume reads each task's last ledger line, and treats a wave task as merged only when its branch has commits past BASE; the scripts directory resolves via `realpath skill://subagent-driven-development/scripts`; fix rounds resume the implementer with `write agent://<id>` (id ledgered) and full results are read at `agent://<id>`; task review scales with risk through `effort: "hi"`; the controller checks reviewer results; templates show omp's real `{ context, tasks: [{ agent, task, solutionSpace }] }` wire shape and the reviewers' structured fields; one omp paragraph for vibe mode, where a director (no `task` or `bash`) hands the whole run to one `good` worker that dispatches the seats itself. Upstream's `references/` is deleted: it holds upstream's own fix loop (5 rounds), final review and resume text, and nothing in this SKILL.md points to it
 - `skills/executing-plans/` — the description, *Why inline*, *When to Use* and the "Prefer subagent-driven-development" paragraph say the partner approved inline execution at the handoff and that SDD reviews per task only where a plan marks it; Setup creates the approved branch in this checkout; a ledger with `Wave` lines resumes under SDD. Additive omp paragraphs: in *Final Review*, the `task` tool has no `model:` field, so the final review goes to `sdd-final-reviewer` (its model is what the host maps that agent to), told that no task was reviewed; it also resolves the scripts directories with `realpath`, runs each script by its absolute path from the working tree, and reads full results at `agent://<id>`; one more for vibe mode, where a director hands the whole run to one `good` worker
 - `skills/requesting-code-review/` — *Mandatory* says a review follows each task on subagent-driven-development's review list, and once on the whole branch at the end, instead of after every task
@@ -305,10 +314,14 @@ Everything else is upstream, unmodified.
 <summary><b>Syncing with upstream</b></summary>
 
 ```bash
+git remote add obra https://github.com/obra/superpowers.git   # once
 git fetch upstream --tags
+git fetch obra main --tags
 git rebase -X theirs upstream/main
 git push --force-with-lease origin main
 ```
+
+`upstream` is LoneExile's omp fork; `obra` is the original superpowers. The current tree is synced through obra/superpowers v7.0.2 (`obra/main` is an ancestor of `main`). When a new obra release lands, LoneExile's fork adapts it first; rebase on `upstream/main`, then port anything from `obra/main` that the adaptation has not picked up.
 
 Expect conflicts in `skills/subagent-driven-development/`, `skills/brainstorming/`, `skills/writing-plans/`, `skills/executing-plans/`, `skills/requesting-code-review/SKILL.md`, `skills/finishing-a-development-branch/SKILL.md`, `.pi/extensions/superpowers.ts`, `pi-tools.md`, `README.md`, and `package.json` whenever upstream touches them — this fork rewrites those files rather than appending to them (README.md is never a partial conflict). A sync that takes upstream's side of executing-plans or requesting-code-review brings back "review after every task" text that contradicts subagent-driven-development's review list: keep the fork's lines. In `package.json` keep the fork's identity and set `version` to `<new upstream version>-omp.1`: CI's package check fails until the version's base matches the upstream version in `.claude-plugin/plugin.json`. `agents/`, the extension's mapping paragraph, the omp blocks in `using-git-worktrees`, and the ovnfs section in `finishing-a-development-branch` are additive.
 
