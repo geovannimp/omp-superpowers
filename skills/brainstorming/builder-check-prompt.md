@@ -1,8 +1,8 @@
 # Builder Check Prompt
 
-Dispatch the `plan` agent with this prompt once the written design
+Dispatch the `planner` agent with this prompt once the written design
 exists. In OMP that seat runs on `modelRoles.plan` by default; remap it
-with `task.agentModelOverrides.plan`. Fill in the domain and the document
+with `task.agentModelOverrides.planner`. Fill in the domain and the document
 path.
 
 ```

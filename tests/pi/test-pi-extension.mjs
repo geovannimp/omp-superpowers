@@ -184,7 +184,7 @@ test('pi tools seat table lists exactly the agents shipped in agents/*.md', asyn
   const seatNames = text
     .split('\n')
     .filter((line) => line.startsWith('|'))
-    .map((row) => row.match(/`(sdd-[a-z-]+|plan)`/)?.[1])
+    .map((row) => row.match(/`(sdd-[a-z-]+|planner)`/)?.[1])
     .filter(Boolean);
   assert.deepEqual([...seatNames].sort(), [...names].sort());
 });

@@ -8,7 +8,7 @@ A version is `<upstream version>-omp.<n>`: the upstream release this fork is syn
 
 ### Added
 
-- **A `plan` seat, and brainstorming's builder check now runs on it.** The new `agents/plan.md` defaults to `model: ["@plan", "@task"]` (`modelRoles.plan`, then `@task`), so the builder check that brainstorming dispatches uses omp's plan model instead of the controller's model. It is remappable without editing the seat: `task.agentModelOverrides.plan` wins over the frontmatter list, then the agent default, then normal fallback. The seat reads the design and the code it touches, reports the questions a builder would still need answered, and can write the plan file a dispatch names.
+- **A `planner` seat, and brainstorming's builder check now runs on it.** The new `agents/planner.md` defaults to `model: ["@plan", "@task"]` (`modelRoles.plan`, then `@task`), so the builder check that brainstorming dispatches uses omp's plan model instead of the controller's model. It is remappable without editing the seat: `task.agentModelOverrides.planner` wins over the frontmatter list, then the agent default, then normal fallback. The seat reads the design and the code it touches, reports the questions a builder would still need answered, and can write the plan file a dispatch names.
 
 ## [7.0.2-omp.3] - 2026-11-09
 

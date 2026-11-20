@@ -27,12 +27,12 @@ Install it:
 omp plugin install npm:@loneexile/omp-superpowers
 ```
 
-Check that it loaded. Your `task` tool's roster should now include the five `sdd-*` agents and the `plan` agent beside omp's own:
+Check that it loaded. Your `task` tool's roster should now include the five `sdd-*` agents and the `planner` agent beside omp's own:
 
 ```bash
 omp -p --no-session --no-skills --model anthropic/claude-haiku-4-5 \
   'List the agent type names your `task` tool offers, comma-separated, nothing else.'
-# plan, sdd-escalation-implementer, sdd-final-reviewer, sdd-implementer, sdd-rereviewer, sdd-reviewer, scout, task, sonic, reviewer, security-reviewer, seance
+# planner, sdd-escalation-implementer, sdd-final-reviewer, sdd-implementer, sdd-rereviewer, sdd-reviewer, scout, task, sonic, reviewer, security-reviewer, seance
 ```
 
 That's all. The skills drive themselves once loaded: start a new omp session and ask for what you want to build.
@@ -123,7 +123,7 @@ flowchart TD
     class I,R,RR,E,W seat
 ```
 
-Blue nodes are the five SDD agents this fork ships; the `plan` seat is outside this flow. A reviewer that cannot read its package yields the `package_gap` verdict value (with what it tried) instead of inventing one, and the controller regenerates and re-dispatches.
+Blue nodes are the five SDD agents this fork ships; the `planner` seat is outside this flow. A reviewer that cannot read its package yields the `package_gap` verdict value (with what it tried) instead of inventing one, and the controller regenerates and re-dispatches.
 
 The helper scripts (`sdd-workspace`, `task-brief`, `review-package`, and executing-plans' `task-start` and `task-done`) act on the git working tree of the current directory, as git does, and stop with one message outside a working tree. The skills resolve their directory once with `realpath skill://…/scripts` and run each by its absolute path from the working tree.
 
@@ -141,9 +141,9 @@ The shipped defaults are Anthropic: sonnet for the seats that run on every task,
 
 `lsp` and `ast_grep` are listed for the seats that benefit, but omp only activates them in subagents when `task.enableLsp` / `astGrep.enabled` are on (both default off).
 
-### The plan seat
+### The planner seat
 
-`plan` is the sixth task agent this fork ships, outside the SDD five. The
+`planner` is the sixth task agent this fork ships, outside the SDD five. The
 brainstorming skill's builder check dispatches it, so that review runs on
 omp's plan model role (`modelRoles.plan`) by default instead of the
 controller's model. It reads the design and the code it touches, reports
@@ -153,12 +153,12 @@ file a dispatch names. It is remappable like any other seat:
 ```yaml
 task:
   agentModelOverrides:
-    plan: "@slow"        # or a concrete provider/model
+    planner: "@slow"     # or a concrete provider/model
 ```
 
 Its defaults are `model: ["@plan", "@task"]` at `thinkingLevel: high`, so
 the plan role wins when it is configured, `@task` catches a missing plan
-pin, and a `task.agentModelOverrides.plan` entry wins over both.
+pin, and a `task.agentModelOverrides.planner` entry wins over both.
 
 <details>
 <summary><b>Which model a seat actually runs on</b></summary>

@@ -1,5 +1,5 @@
 ---
-name: plan
+name: planner
 description: "Superpowers planning seat: reads a design document as a builder would, reports the questions that must be answered before it can plan, and drafts implementation plans. Runs on OMP's plan model role by default."
 tools: read, grep, glob, write
 # thinkingLevel is the seat's reasoning tier; an explicit :level on the model
