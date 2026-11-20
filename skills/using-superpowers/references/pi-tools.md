@@ -24,7 +24,7 @@ The tool is lowercase `task`; `Task` does not exist. `task.isolation.enabled` (d
 
 The `task` tool has **no `model:` field**. Every `model: [...]` line in a Superpowers template is inert here — the agent TYPE carries model, thinking level, and tool set. The bundled `task` is a general agent with the widest tool set and whatever `modelRoles.task` names, not an SDD seat's contract.
 
-This fork ships SDD-specific agents (they appear in the `task` roster once the plugin is installed):
+This fork ships these task agents (they appear in the `task` roster once the plugin is installed):
 
 | Superpowers role | `agent:` | Shipped default · thinking | Tools |
 | --- | --- | --- | --- |
@@ -33,8 +33,11 @@ This fork ships SDD-specific agents (they appear in the `task` roster once the p
 | Scoped re-review | `sdd-rereviewer` | claude-sonnet-5-5 · low | `read`/`grep`; ≤4 working calls plus the final `yield` |
 | Fix round 3 / ruled strongest-tier task | `sdd-escalation-implementer` | claude-opus-5-5 · max | same tools as the implementer |
 | Final whole-branch review (subagent-driven-development or executing-plans) | `sdd-final-reviewer` | claude-opus-5-5 · max | read-only + focused bash |
+| Brainstorming builder check | `plan` | `@plan` role · high | `read`, `grep`, `glob`; `write` for the plan file a dispatch names |
 
-Shipped defaults are Anthropic; the tiers are a thinking ladder (low / medium / high / max). Re-point any seat per host with `task.agentModelOverrides` in `~/.omp/agent/config.yml` (or `/agents`) — it beats the agent file's `model:`, applies on the next dispatch, and a bare model keeps the agent's `thinkingLevel:` while an explicit `:level` replaces it. Turn on `task.showResolvedModelBadge` (default off) to see the model each subagent actually ran.
+Shipped defaults are Anthropic for the SDD seats; the tiers are a thinking ladder (low / medium / high / max). Re-point any seat per host with `task.agentModelOverrides` in `~/.omp/agent/config.yml` (or `/agents`) — it beats the agent file's `model:`, applies on the next dispatch, and a bare model keeps the agent's `thinkingLevel:` while an explicit `:level` replaces it. Turn on `task.showResolvedModelBadge` (default off) to see the model each subagent actually ran.
+
+The `plan` seat is outside the SDD ladder: brainstorming dispatches it for the builder check, so it runs on `modelRoles.plan` by default. `task.agentModelOverrides.plan` remaps it (for example to `@slow`) without editing the agent file.
 
 Never use the bundled `task` agent for an SDD seat: it lacks the seat's tools, output contract and no-subagent rule, and runs whatever `modelRoles.task` names (else the session model). If `task.enableEffort` is on, `effort: "hi"` on a dispatch raises that one subagent's thinking without changing its model — the only accepted values are `"lo"`, `"med"`, `"hi"`. `"hi"` maps to the model's top supported level, capped by `task.maxEffort`.
 

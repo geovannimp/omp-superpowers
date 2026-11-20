@@ -279,8 +279,10 @@ could plan from without going back to your human partner. Cover:
 Otherwise, pick a sensible place and say where. Your human partner's
 preferences override both.
 
-**Builder check:** dispatch a fresh subagent with
-`builder-check-prompt.md` in this directory. When you tell your human
+**Builder check:** dispatch the `plan` agent with
+`builder-check-prompt.md` in this directory — in OMP it runs on the plan
+model role by default (`modelRoles.plan`; override it with
+`task.agentModelOverrides.plan`). When you tell your human
 partner you're writing it up, say a reviewer will read it first, that you
 may come back once with a few questions, and, for software, that the
 plan comes with it. Don't hand over the document until the check is

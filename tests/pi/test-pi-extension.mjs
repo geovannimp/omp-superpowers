@@ -178,13 +178,13 @@ test('pi tools seat table lists exactly the agents shipped in agents/*.md', asyn
     assert.ok(name, `${file} has a name: frontmatter`);
     names.push(name);
   }
-  assert.equal(names.length, 5);
+  assert.equal(names.length, 6);
 
   const text = await readFile(piToolsPath, 'utf8');
   const seatNames = text
     .split('\n')
     .filter((line) => line.startsWith('|'))
-    .map((row) => row.match(/`(sdd-[a-z-]+)`/)?.[1])
+    .map((row) => row.match(/`(sdd-[a-z-]+|plan)`/)?.[1])
     .filter(Boolean);
   assert.deepEqual([...seatNames].sort(), [...names].sort());
 });

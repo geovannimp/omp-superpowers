@@ -1,7 +1,9 @@
 # Builder Check Prompt
 
-Dispatch a fresh general-purpose subagent with this prompt once the
-written design exists. Fill in the domain and the document path.
+Dispatch the `plan` agent with this prompt once the written design
+exists. In OMP that seat runs on `modelRoles.plan` by default; remap it
+with `task.agentModelOverrides.plan`. Fill in the domain and the document
+path.
 
 ```
 You are a talented [DOMAIN, e.g. "software engineer", "event planner",
