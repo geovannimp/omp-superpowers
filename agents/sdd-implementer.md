@@ -4,10 +4,10 @@ description: "Superpowers SDD implementer: executes ONE task brief (TDD, commit,
 tools: read, write, edit, bash, grep, glob, lsp, ast_grep
 # thinkingLevel is the seat's reasoning tier; an explicit :level on the model
 # string (or on a task.agentModelOverrides entry) takes precedence over it.
-# `model` is an ordered list: the first entry whose provider has credentials
-# wins, so `@task` (the host's subagent role) only catches a missing pin; the
+# `model` is an ordered list of OMP role aliases; the first entry whose
+# provider has credentials wins. `@task` is the host's subagent role; the
 # list is also the seat's runtime retry chain (retry.modelFallback).
-model: ["anthropic/claude-sonnet-5-5:medium", "@task"]
+model: ["@task"]
 thinkingLevel: medium
 # A plain `read` summarizes code files to declarations; this seat edits what it reads.
 readSummarize: false

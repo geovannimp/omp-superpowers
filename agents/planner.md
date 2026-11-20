@@ -4,9 +4,9 @@ description: "Superpowers planning seat: reads a design document as a builder wo
 tools: read, grep, glob, write
 # thinkingLevel is the seat's reasoning tier; an explicit :level on the model
 # string (or on a task.agentModelOverrides entry) takes precedence over it.
-# `model` is an ordered list: the first entry whose provider has credentials
-# wins, so `@task` only catches a missing plan-role pin; the list is also the
-# seat's runtime retry chain (retry.modelFallback).
+# `model` is an ordered list of OMP role aliases; the first entry whose
+# provider has credentials wins. `@task` catches a missing plan-role pin; the
+# list is also the seat's runtime retry chain (retry.modelFallback).
 model: ["@plan", "@task"]
 thinkingLevel: high
 # A plain `read` summarizes code files to declarations; this seat plans from

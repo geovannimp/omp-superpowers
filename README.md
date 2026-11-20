@@ -30,7 +30,7 @@ omp plugin install npm:@loneexile/omp-superpowers
 Check that it loaded. Your `task` tool's roster should now include the five `sdd-*` agents and the `planner` agent beside omp's own:
 
 ```bash
-omp -p --no-session --no-skills --model anthropic/claude-haiku-4-5 \
+omp -p --no-session --no-skills --model @smol \
   'List the agent type names your `task` tool offers, comma-separated, nothing else.'
 # planner, sdd-escalation-implementer, sdd-final-reviewer, sdd-implementer, sdd-rereviewer, sdd-reviewer, scout, task, sonic, reviewer, security-reviewer, seance
 ```
@@ -129,15 +129,15 @@ The helper scripts (`sdd-workspace`, `task-brief`, `review-package`, and executi
 
 ### The five seats
 
-| Seat | agent | shipped default · thinking | falls back to | tools |
-|---|---|---|---|---|
-| implementer (every task, fix rounds 1–2) | `sdd-implementer` | claude-sonnet-5-5 · medium | `@task` | read, write, edit, bash, grep, glob, lsp, ast_grep |
-| task reviewer | `sdd-reviewer` | claude-sonnet-5-5 · high | `@task` | read, grep, glob |
-| scoped re-review | `sdd-rereviewer` | claude-sonnet-5-5 · low | `@task` | read, grep |
-| fix round 3 / ruled strongest-tier task | `sdd-escalation-implementer` | claude-opus-5-5 · max | `@slow` | same as implementer |
-| final whole-branch review (subagent-driven or Native) | `sdd-final-reviewer` | claude-opus-5-5 · max | `@slow` | read, grep, glob, bash, lsp, ast_grep |
+| Seat | agent | model alias · thinking | tools |
+|---|---|---|---|
+| implementer (every task, fix rounds 1–2) | `sdd-implementer` | `@task` · medium | read, write, edit, bash, grep, glob, lsp, ast_grep |
+| task reviewer | `sdd-reviewer` | `@task` · high | read, grep, glob |
+| scoped re-review | `sdd-rereviewer` | `@task` · low | read, grep |
+| fix round 3 / ruled strongest-tier task | `sdd-escalation-implementer` | `@slow` · max | same as implementer |
+| final whole-branch review (subagent-driven or Native) | `sdd-final-reviewer` | `@slow` · max | read, grep, glob, bash, lsp, ast_grep |
 
-The shipped defaults are Anthropic: sonnet for the seats that run on every task, opus for the two that run once per plan or once per stuck task. The tiers are a **thinking ladder** as much as a model ladder — re-reviews reason at `low`, escalation and the final review at `max`.
+The seats ship role aliases, not model ids: `@task` for the seats that run on every task and `@slow` for the two that run once per plan or once per stuck task. The tiers are a **thinking ladder** as much as a model ladder — re-reviews reason at `low`, escalation and the final review at `max`. Re-point a role once in `modelRoles`, or one seat with `task.agentModelOverrides`.
 
 `lsp` and `ast_grep` are listed for the seats that benefit, but omp only activates them in subagents when `task.enableLsp` / `astGrep.enabled` are on (both default off).
 
@@ -163,7 +163,7 @@ pin, and a `task.agentModelOverrides.planner` entry wins over both.
 <details>
 <summary><b>Which model a seat actually runs on</b></summary>
 
-omp takes the first list entry whose provider has credentials. If the pin has none, the seat runs on your `modelRoles.task` / `modelRoles.slow` model at that role's own level. An unset `@task` drops out, and the seat then silently runs on the controller's model; an unset `@slow` expands to omp's built-in strong-model ranking. The list is also the retry chain on rate-limit and usage-limit errors, gated by `retry.modelFallback` (default on); there is no switch on context overflow. Turn on `task.showResolvedModelBadge`, or read `session_init.resolvedModel` in a subagent transcript, to see what actually ran.
+omp expands each seat's role alias through `modelRoles` at launch (or its built-in priority chain when the role is unset). An unset `@task` drops out, and the seat then silently runs on the controller's model; an unset `@slow` expands to omp's built-in strong-model ranking. Because no seat pins a provider model, moving `@task` or `@slow` in `modelRoles` moves every seat that uses it. The list is also the retry chain on rate-limit and usage-limit errors, gated by `retry.modelFallback` (default on); there is no switch on context overflow. Turn on `task.showResolvedModelBadge`, or read `session_init.resolvedModel` in a subagent transcript, to see what actually ran.
 
 </details>
 
@@ -243,7 +243,7 @@ flowchart LR
 <details>
 <summary><b>Rules that are easy to get wrong</b></summary>
 
-- A **bare model** (`anthropic/claude-haiku-4-5`) keeps the agent file's own `thinkingLevel`. Add `:level` (`…:high`) to change reasoning too.
+- A **bare model** (`provider/model`) keeps the agent file's own `thinkingLevel`. Add `:level` (`…:high`) to change reasoning too.
 - **Delete a line** to fall back to the agent file's default for that seat. Overrides apply on the next dispatch — no restart.
 - An override **replaces the whole model list**, fallback included. Append `,@task` (for example `provider/model:high,@task`) to keep one.
 - The `task` tool has **no `model:` field**. Never dispatch the bundled `task` or `reviewer` agent for an SDD seat — they lack the seat's tools, structured output and no-subagent rule, and run whatever `modelRoles.task` / `modelRoles.slow` names.

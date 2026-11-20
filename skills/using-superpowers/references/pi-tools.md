@@ -26,16 +26,16 @@ The `task` tool has **no `model:` field**. Every `model: [...]` line in a Superp
 
 This fork ships these task agents (they appear in the `task` roster once the plugin is installed):
 
-| Superpowers role | `agent:` | Shipped default · thinking | Tools |
+| Superpowers role | `agent:` | Model alias · thinking | Tools |
 | --- | --- | --- | --- |
-| Implementer, fix rounds 1-2 | `sdd-implementer` | claude-sonnet-5-5 · medium | edit/test tools; no subagents |
-| Task reviewer | `sdd-reviewer` | claude-sonnet-5-5 · high | `read`, `grep`, `glob` — no bash, edit, or file-writing tool |
-| Scoped re-review | `sdd-rereviewer` | claude-sonnet-5-5 · low | `read`/`grep`; ≤4 working calls plus the final `yield` |
-| Fix round 3 / ruled strongest-tier task | `sdd-escalation-implementer` | claude-opus-5-5 · max | same tools as the implementer |
-| Final whole-branch review (subagent-driven-development or executing-plans) | `sdd-final-reviewer` | claude-opus-5-5 · max | read-only + focused bash |
-| Brainstorming builder check | `planner` | `@plan` role · high | `read`, `grep`, `glob`; `write` for the plan file a dispatch names |
+| Implementer, fix rounds 1-2 | `sdd-implementer` | `@task` · medium | edit/test tools; no subagents |
+| Task reviewer | `sdd-reviewer` | `@task` · high | `read`, `grep`, `glob` — no bash, edit, or file-writing tool |
+| Scoped re-review | `sdd-rereviewer` | `@task` · low | `read`/`grep`; ≤4 working calls plus the final `yield` |
+| Fix round 3 / ruled strongest-tier task | `sdd-escalation-implementer` | `@slow` · max | same tools as the implementer |
+| Final whole-branch review (subagent-driven-development or executing-plans) | `sdd-final-reviewer` | `@slow` · max | read-only + focused bash |
+| Brainstorming builder check | `planner` | `@plan` · high | `read`, `grep`, `glob`; `write` for the plan file a dispatch names |
 
-Shipped defaults are Anthropic for the SDD seats; the tiers are a thinking ladder (low / medium / high / max). Re-point any seat per host with `task.agentModelOverrides` in `~/.omp/agent/config.yml` (or `/agents`) — it beats the agent file's `model:`, applies on the next dispatch, and a bare model keeps the agent's `thinkingLevel:` while an explicit `:level` replaces it. Turn on `task.showResolvedModelBadge` (default off) to see the model each subagent actually ran.
+The SDD seats ship role aliases, not model ids: `@task` for per-task seats and `@slow` for escalation and final review; the tiers are a thinking ladder (low / medium / high / max). Re-point a role once in `modelRoles`, or any seat per host with `task.agentModelOverrides` in `~/.omp/agent/config.yml` (or `/agents`) — it beats the agent file's `model:`, applies on the next dispatch, and a bare model keeps the agent's `thinkingLevel:` while an explicit `:level` replaces it. Turn on `task.showResolvedModelBadge` (default off) to see the model each subagent actually ran.
 
 The `planner` seat is outside the SDD ladder: brainstorming dispatches it for the builder check, so it runs on `modelRoles.plan` by default. `task.agentModelOverrides.planner` remaps it (for example to `@slow`) without editing the agent file.
 

@@ -4,10 +4,10 @@ description: "Superpowers final whole-branch reviewer, dispatched once per plan:
 tools: read, grep, glob, bash, lsp, ast_grep
 # thinkingLevel is the seat's reasoning tier; an explicit :level on the model
 # string (or on a task.agentModelOverrides entry) takes precedence over it.
-# `model` is an ordered list: the first entry whose provider has credentials
-# wins, so `@slow` (the host's strong-model role) only catches a missing pin;
+# `model` is an ordered list of OMP role aliases; the first entry whose
+# provider has credentials wins. `@slow` is the host's strong-model role;
 # the list is also the seat's runtime retry chain (retry.modelFallback).
-model: ["anthropic/claude-opus-5-5:max", "@slow"]
+model: ["@slow"]
 thinkingLevel: max
 # A plain `read` summarizes code files to declarations; this seat judges whole hunks.
 readSummarize: false
