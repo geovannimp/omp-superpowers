@@ -19,9 +19,9 @@ version=$(node -p "require('./package.json').version")
 upstream=$(node -p "require('./.claude-plugin/plugin.json').version")
 
 # Resolving an upstream sync's package.json conflict with upstream's side
-# would retarget the squatted `superpowers` name on npm.
-[ "$name" = "@loneexile/omp-superpowers" ] ||
-  fail "name is '$name', expected '@loneexile/omp-superpowers'"
+# would retarget LoneExile's published `@loneexile/omp-superpowers` name.
+[ "$name" = "@geovannimp/omp-superpowers" ] ||
+  fail "name is '$name', expected '@geovannimp/omp-superpowers'"
 
 # A version is <upstream version>-omp.<n>. Its base is the obra/superpowers
 # release this branch is synced to; upstream's bump-version keeps that version

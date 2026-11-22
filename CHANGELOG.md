@@ -1,12 +1,14 @@
 # Changelog
 
-Releases of [`@loneexile/omp-superpowers`](https://www.npmjs.com/package/@loneexile/omp-superpowers), the omp (Oh My Pi) adaptation of [obra/superpowers](https://github.com/obra/superpowers).
+Releases of this fork, [`@geovannimp/omp-superpowers`](https://github.com/geovannimp/omp-superpowers), the omp (Oh My Pi) adaptation of [obra/superpowers](https://github.com/obra/superpowers). The npm package [`@loneexile/omp-superpowers`](https://www.npmjs.com/package/@loneexile/omp-superpowers) is LoneExile's upstream release.
 
 A version is `<upstream version>-omp.<n>`: the upstream release this fork is synced to, then the fork's own iteration on top of it. Upstream's changes are described in its [release notes](https://github.com/obra/superpowers/blob/main/RELEASE-NOTES.md); this file records what the fork adds or changes.
 
 ## [Unreleased]
 
 ### Added
+
+- **Fork identity.** The package is now `@geovannimp/omp-superpowers`, so `omp plugin list` names this fork instead of LoneExile's published package. Install from git: `omp plugin install git:github.com/geovannimp/omp-superpowers@main`.
 
 - **A `planner` seat, and brainstorming's builder check now runs on it.** The new `agents/planner.md` defaults to `model: ["@plan", "@task"]` (`modelRoles.plan`, then `@task`), so the builder check that brainstorming dispatches uses omp's plan model instead of the controller's model. It is remappable without editing the seat: `task.agentModelOverrides.planner` wins over the frontmatter list, then the agent default, then normal fallback. The seat reads the design and the code it touches, reports the questions a builder would still need answered, and can write the plan file a dispatch names.
 
@@ -215,7 +217,7 @@ First release, synced to upstream [v6.4.2](https://github.com/obra/superpowers/b
 - The fork's rewritten subagent-driven-development text invokes its helper scripts through `bash` as well, so a package extractor that drops exec bits cannot break them.
 - `sdd-final-reviewer` carries upstream's new review rules from `code-reviewer.md`, the template it replaces in SDD's final review: the spec is a vision document (behavior it is silent on is graded by what a reasonable person expects), and a "Declined to judge" section that the controller rules on and ledgers like a plan conflict.
 
-[Unreleased]: https://github.com/LoneExile/omp-superpowers/compare/v7.0.2-omp.3...HEAD
+[Unreleased]: https://github.com/geovannimp/omp-superpowers/compare/v7.0.2-omp.3...HEAD
 [7.0.2-omp.3]: https://github.com/LoneExile/omp-superpowers/releases/tag/v7.0.2-omp.3
 [7.0.2-omp.2]: https://github.com/LoneExile/omp-superpowers/releases/tag/v7.0.2-omp.2
 [7.0.2-omp.1]: https://github.com/LoneExile/omp-superpowers/releases/tag/v7.0.2-omp.1

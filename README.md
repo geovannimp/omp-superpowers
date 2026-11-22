@@ -44,15 +44,15 @@ To update later, reinstall the fork and restart omp:
 omp plugin install --force git:github.com/geovannimp/omp-superpowers@main
 ```
 
-The published `npm:@loneexile/omp-superpowers` package is LoneExile's release and does not carry this fork's planner seat or gate.
+The published `npm:@loneexile/omp-superpowers` package is LoneExile's release and does not carry this fork's planner seat or gate. This fork installs from git under its own package name, so `omp plugin list` shows `@geovannimp/omp-superpowers`.
 
 <details>
 <summary><b>Versions, upgrading and other ways to install</b></summary>
 
-Releases are versioned `<upstream version>-omp.<n>`: `7.0.2-omp.1` is upstream v7.0.2 plus LoneExile's first omp iteration on it. [CHANGELOG.md](CHANGELOG.md) lists each release. This fork is synced to obra/superpowers v7.0.2 (`obra/main`) and LoneExile's `7.0.2-omp.3`; the planner seat, alias-only models and the extension gate are fork-only changes on top of that. To pin a branch or commit, uninstall and install from the fork:
+Releases are versioned `<upstream version>-omp.<n>`: `7.0.2-omp.1` is upstream v7.0.2 plus LoneExile's first omp iteration on it. [CHANGELOG.md](CHANGELOG.md) lists each release. This fork is synced to obra/superpowers v7.0.2 (`obra/main`) and LoneExile's `7.0.2-omp.3`; the planner seat, alias-only models and the extension gate are fork-only changes on top of that. To pin a branch or commit, uninstall the current label (`@geovannimp/omp-superpowers`, or `@loneexile/omp-superpowers` if you are migrating from the old label) and install from the fork:
 
 ```bash
-omp plugin uninstall @loneexile/omp-superpowers
+omp plugin uninstall @geovannimp/omp-superpowers
 omp plugin install git:github.com/geovannimp/omp-superpowers@<branch-or-sha>
 ```
 
@@ -300,7 +300,7 @@ In short: the omp extension and `pi-tools.md` describe omp's real tools; five SD
 - `skills/finishing-a-development-branch/` — in a normal repo (a branch made in this checkout), the discard path switches to the base branch before `git branch -D`, which git refuses on the checked-out branch; an additive section for ovnfs checkouts: option 1 applies the feature branch to the user's folder with `ovnfs apply --branch` and merges it there, the other options say where the branch is, and the checkout is removed only if this session opened it
 - `README.md` — this file: rewritten for omp (install, seats, overrides, ovnfs, maintenance); upstream's multi-harness README is gone
 - `tests/pi/test-pi-extension.mjs` — covers the extension's lifecycle (bootstrap on every request of every prompt, after a compaction summary, and none for subagents), the action table in `pi-tools.md`, the seat table against the names in `agents/*.md`, and the `.omp-plugin/plugin.json` manifest; the package-name assertion is gone (`scripts/check-npm-package.sh` checks the published name)
-- `package.json` — the npm identity: `@loneexile/omp-superpowers`, `<upstream version>-omp.<n>` versions, a `files` allowlist (the extension, `skills/`, `agents/`), `publishConfig`, `omp`/`oh-my-pi` keywords; `main` is dropped, since it pointed at the OpenCode plugin this package does not ship
+- `package.json` — the fork's npm identity: `@geovannimp/omp-superpowers`, `<upstream version>-omp.<n>` versions, a `files` allowlist (the extension, `skills/`, `agents/`), `publishConfig`, `omp`/`oh-my-pi` keywords; `main` is dropped, since it pointed at the OpenCode plugin this package does not ship
 - Spec and plan paths — `docs/specs/` and `docs/plans/` instead of upstream's `docs/superpowers/specs/` and `docs/superpowers/plans/`: brainstorming's *Where it goes*, writing-plans' save path and handoff lines, and the example plan paths in executing-plans, subagent-driven-development and requesting-code-review. `.superpowers/` (the SDD workspace, brainstorm companion files) is unchanged. `scripts/check-npm-package.sh` fails if a shipped file names `docs/superpowers/`
 - `CHANGELOG.md`, `.github/workflows/` (CI, npm release), `scripts/check-npm-package.sh` — new
 
